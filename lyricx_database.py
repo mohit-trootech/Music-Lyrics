@@ -1,6 +1,7 @@
 """Sample Database to Find Lyrics to Improve Request Return Lyrics if Present in Database to Improve Speed and Stop
 Unnecessary API Request"""
 import sqlite3
+import constant
 
 
 class Database:
@@ -14,16 +15,25 @@ class Database:
                    "tracks (id, track_name, album_name, artist_name, rating, track_lyrics);")
 
     @classmethod
-    def fetch_from_database(cls, song):
-        cls.cursor.execute(f"SELECT * FROM tracks WHERE track_name = '{song}';")
-        return cls.cursor.fetchone()
+    def fetch_from_database(cls, song: str):
+        """fetch data from database"""
+        try:
+            cls.cursor.execute(f"SELECT * FROM tracks WHERE track_name like '%{song}%';")
+            return cls.cursor.fetchone()
+        except sqlite3.OperationalError as e:
+            print(constant.SQL_OPERATION_ERROR, e)
 
     @classmethod
-    def save_2_database(cls, track_details):
+    def save_2_database(cls, track_details: dict) -> None:
+        """save data to database after request from api"""
         try:
             cls.cursor.execute(
                 "INSERT INTO tracks (id, track_name, album_name, artist_name, rating, track_lyrics) VALUES "
                 "(:id, :name, :album, :artist, :rating, :lyrics);", track_details)
             cls.db.commit()
-        except sqlite3.DatabaseError as e:
-            print("Database Execution Error", e)
+        except sqlite3.OperationalError as e:
+            print(constant.SQL_OPERATION_ERROR, e)
+
+
+if __name__ == "__main__":
+    pass

@@ -2,29 +2,28 @@
 import sqlite3
 import requests
 import constant
-import lyricx_database
-from time import sleep
-
-FETCH_TRACK_URL = (f'https://api.musixmatch.com/ws/1.1/track.search?apikey={constant.API_KEY}&s_track_rating=DESC'
-                   '&s_has_lyrics&page_size=1&page=1&q_track=')
-FETCH_TRACK_LYRICS = (f'https://api.musixmatch.com/ws/1.1/track.lyrics.get?apikey={constant.API_KEY}'
-                      f'&track_id=')
+from lyricx_database import Database
 
 
 class Request:
     """This is a Python class with the purpose of collecting and parsing data. It seems like the class is supposed to
     fetch the data from a server and check the status code that comes back. If the status code is not 200,
     then an error is raised."""
+
     @staticmethod
     def parse_data(response):
-        if response['header']['status_code'] != 200:
-            raise Exception("Boo! HTTP Error")
-        return response['body']
+        """Parse Relevant Data from response object"""
+        try:
+            if response['header']['status_code'] != constant.STATUS_OK_200:
+                raise Exception(constant.ERROR_MSG_HTTP)
+            return response['body']
+        except KeyError as e:
+            print("Key Not Found", e)
 
-    @classmethod
-    def get(cls, url):
+    def get(self, url):
+        """fetch response from API"""
         response = requests.get(url)
-        return Request.parse_data(response.json()['message'])
+        return self.parse_data(response.json()['message'])
 
 
 class Lyrics:
@@ -33,63 +32,66 @@ class Lyrics:
     the database, the code will resort to the Request class to obtain the data from the API, subsequently storing the
     result in the database, and ultimately displaying the result.ves the result into database and prints the result"""
 
-    track_details = {}
-
-    def __init__(self, song):
+    def __init__(self, song: str):
         self.song = song.capitalize().strip()
+        self.request = Request()
+        self.track_details = {}
 
-    def fetch_lyrics(self):
+    def fetch_lyrics(self) -> None:
+        """fetch lyrics from database if found call get_lyrics to print else request_track with api"""
         try:
-            track_details = lyricx_database.Database.fetch_from_database(self.song)
+            track_details = Database.fetch_from_database(self.song)
             if track_details:
                 print("Found in Database")
-                Lyrics.get_lyrics(track_details)
+                self.get_lyrics(track_details)
             else:
                 print(f"Not Found in Database")
-                Lyrics.request_track(self.song)
+                self.request_track(self.song)
         except sqlite3.OperationalError as e:
             print(f"Data Not Found {e}")
-            Lyrics.request_track(self.song)
 
-    @staticmethod
-    def request_track(song):
+    def request_track(self, song: str) -> None:
+        """request track details with api from Request class get method"""
         try:
-            track_response = Request.get(f"{FETCH_TRACK_URL}{song}")
+            track_response = self.request.get(f"{constant.FETCH_TRACK_URL}{song}")
             tracks = track_response['track_list'][0]['track']
-            Lyrics.track_details = {
+            self.track_details = {
                 "id": tracks["track_id"],
                 "name": tracks["track_name"],
                 "album": tracks['album_name'],
                 "artist": tracks['artist_name'],
                 "rating": tracks["track_rating"]
             }
-            Lyrics.request_lyrics(Lyrics.track_details['id'])
-        except KeyError:
-            print("Key Error Response Object keys Not Matched")
+            self.request_lyrics(self.track_details['id'])
+        except KeyError as e:
+            print(constant.KEY_ERROR, e)
 
-    @staticmethod
-    def request_lyrics(track_id):
-        response = Request.get(f"{FETCH_TRACK_LYRICS}{track_id}")
+    def request_lyrics(self, track_id: int) -> None:
+        """request track lyrics with api from Request class get method"""
+        response = self.request.get(f"{constant.FETCH_TRACK_LYRICS}{track_id}")
         try:
             lyrics = response['lyrics']['lyrics_body']
-            Lyrics.track_details.setdefault("lyrics", lyrics)
-            Lyrics.save_lyrics(Lyrics.track_details)
-        except KeyError:
-            print("Key Error Response Object keys Not Matched")
+            self.track_details.setdefault("lyrics", lyrics)
+            self.save_lyrics()
+        except KeyError as e:
+            print(constant.KEY_ERROR, e)
 
-    @staticmethod
-    def save_lyrics(track_details):
+    def save_lyrics(self) -> None:
+        """method to store fetched track details and lyrics"""
         try:
-            lyricx_database.Database.save_2_database(track_details)
-            Lyrics.get_lyrics(list(Lyrics.track_details.values()))
+            Database.save_2_database(self.track_details)
+            self.get_lyrics(list(self.track_details.values()))
         except Exception as e:
             print(e)
 
     @staticmethod
-    def get_lyrics(track_lyrics):
+    def get_lyrics(track_lyrics: tuple) -> None:
+        """static method to print track details and lyrics"""
+        print("Track Details", track_lyrics)
         print(track_lyrics[-1])
 
 
-song_name = input("Enter Song Name : ")
-song_object = Lyrics(song_name)
-song_object.fetch_lyrics()
+if __name__ == "__main__":
+    song_name = input("Enter Song Name : ")
+    song_object = Lyrics(song_name)
+    song_object.fetch_lyrics()
