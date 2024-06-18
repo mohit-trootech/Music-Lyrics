@@ -15,7 +15,7 @@ class Database:
 
     @classmethod
     def fetch_from_database(cls, song):
-        cls.cursor.execute(f"SELECT * FROM tracks where track_name = '{song}';")
+        cls.cursor.execute(f"SELECT * FROM tracks WHERE track_name = '{song}';")
         return cls.cursor.fetchone()
 
     @classmethod
