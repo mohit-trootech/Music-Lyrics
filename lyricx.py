@@ -1,10 +1,9 @@
 """Python Lyricx Command Line Program to Generate Lyrics of Songs"""
 import sqlite3
-
-from requests import get
-
+import requests
 import constant
 import lyricx_database
+from time import sleep
 
 FETCH_TRACK_URL = (f'https://api.musixmatch.com/ws/1.1/track.search?apikey={constant.API_KEY}&s_track_rating=DESC'
                    '&s_has_lyrics&page_size=1&page=1&q_track=')
@@ -12,12 +11,29 @@ FETCH_TRACK_LYRICS = (f'https://api.musixmatch.com/ws/1.1/track.lyrics.get?apike
                       f'&track_id=')
 
 
-def request_get(url_data):
-    response = get(url_data).json()
-    return response['message']['body']
+class Request:
+    """This is a Python class with the purpose of collecting and parsing data. It seems like the class is supposed to
+    fetch the data from a server and check the status code that comes back. If the status code is not 200,
+    then an error is raised."""
+    @staticmethod
+    def parse_data(response):
+        print(response['header']['status_code'])
+        if response['header']['status_code'] != 200:
+            raise Exception("Boo! HTTP Error")
+        return response['body']
+
+    @classmethod
+    def get(cls, url):
+        response = requests.get(url)
+        return Request.parse_data(response.json()['message'])
 
 
 class Lyrics:
+    """The code provided is an illustration of a Python class used for acquiring lyrics for a song. When the lyrics
+    are located in the database, the code delivers the result to exhibit the lyrics. If the lyrics are absent from
+    the database, the code will resort to the Request class to obtain the data from the API, subsequently storing the
+    result in the database, and ultimately displaying the result.ves the result into database and prints the result"""
+    
     track_details = {}
 
     def __init__(self, song):
@@ -39,7 +55,7 @@ class Lyrics:
     @staticmethod
     def request_track(song):
         try:
-            track_response = request_get(f"{FETCH_TRACK_URL}{song}")
+            track_response = Request.get(f"{FETCH_TRACK_URL}{song}")
             tracks = track_response['track_list'][0]['track']
             Lyrics.track_details = {
                 "id": tracks["track_id"],
@@ -54,7 +70,7 @@ class Lyrics:
 
     @staticmethod
     def request_lyrics(track_id):
-        response = request_get(f"{FETCH_TRACK_LYRICS}{track_id}")
+        response = Request.get(f"{FETCH_TRACK_LYRICS}{track_id}")
         try:
             lyrics = response['lyrics']['lyrics_body']
             Lyrics.track_details.setdefault("lyrics", lyrics)

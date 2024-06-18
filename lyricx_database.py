@@ -4,6 +4,10 @@ import sqlite3
 
 
 class Database:
+    """This class will do just that. It can fetch and save data, giving you more options for how you work with your
+    data. It’s easy to use and implement, so you can have a functional database connection in no time. sql queries to
+    fetch and save data in database"""
+
     db = sqlite3.connect("music.db")
     cursor = db.cursor()
     cursor.execute("CREATE TABLE IF NOT EXISTS "
