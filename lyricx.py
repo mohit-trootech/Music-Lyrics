@@ -11,16 +11,16 @@ class Request:
     then an error is raised."""
 
     @staticmethod
-    def parse_data(response):
+    def parse_data(response: dict) -> dict:
         """Parse Relevant Data from response object"""
         try:
-            if response['header']['status_code'] != constant.STATUS_OK_200:
-                raise Exception(constant.ERROR_MSG_HTTP)
+            if response['header']['status_code'] != constant.STATUS_OK:
+                raise Exception(constant.ERROR_HTTP)
             return response['body']
         except KeyError as e:
-            print("Key Not Found", e)
+            print(constant.KEY_ERROR, e)
 
-    def get(self, url):
+    def get(self, url: str) -> dict:
         """fetch response from API"""
         response = requests.get(url)
         return self.parse_data(response.json()['message'])
@@ -32,15 +32,16 @@ class Lyrics:
     the database, the code will resort to the Request class to obtain the data from the API, subsequently storing the
     result in the database, and ultimately displaying the result.ves the result into database and prints the result"""
 
-    def __init__(self, song: str):
+    def __init__(self, song: str) -> None:
         self.song = song.capitalize().strip()
         self.request = Request()
+        self.database = Database()
         self.track_details = {}
 
     def fetch_lyrics(self) -> None:
         """fetch lyrics from database if found call get_lyrics to print else request_track with api"""
         try:
-            track_details = Database.fetch_from_database(self.song)
+            track_details = self.database.fetch_from_database(self.song)
             if track_details:
                 print("Found in Database")
                 self.get_lyrics(track_details)
@@ -79,7 +80,7 @@ class Lyrics:
     def save_lyrics(self) -> None:
         """method to store fetched track details and lyrics"""
         try:
-            Database.save_2_database(self.track_details)
+            self.database.save_2_database(self.track_details)
             self.get_lyrics(list(self.track_details.values()))
         except Exception as e:
             print(e)
@@ -87,7 +88,6 @@ class Lyrics:
     @staticmethod
     def get_lyrics(track_lyrics: tuple) -> None:
         """static method to print track details and lyrics"""
-        print("Track Details", track_lyrics)
         print(track_lyrics[-1])
 
 

@@ -9,30 +9,29 @@ class Database:
     data. It’s easy to use and implement, so you can have a functional database connection in no time. sql queries to
     fetch and save data in database"""
 
-    db = sqlite3.connect("music.db")
-    cursor = db.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS "
-                   "tracks (id, track_name, album_name, artist_name, rating, track_lyrics);")
+    def __init__(self) -> None:
+        self.db = sqlite3.connect(constant.DB_NAME)
+        self.cursor = self.db.cursor()
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS "
+                            "tracks (id, track_name, album_name, artist_name, rating, track_lyrics);")
 
-    @classmethod
-    def fetch_from_database(cls, song: str):
+    def fetch_from_database(self, song: str) -> tuple:
         """fetch data from database"""
         try:
-            cls.cursor.execute(f"SELECT * FROM tracks WHERE track_name like '%{song}%';")
-            return cls.cursor.fetchone()
+            self.cursor.execute(f"SELECT * FROM tracks WHERE track_name like '%{song}%';")
+            return self.cursor.fetchone()
         except sqlite3.OperationalError as e:
-            print(constant.SQL_OPERATION_ERROR, e)
+            print(constant.OPERATION_ERROR, e)
 
-    @classmethod
-    def save_2_database(cls, track_details: dict) -> None:
+    def save_2_database(self, track_details: dict) -> None:
         """save data to database after request from api"""
         try:
-            cls.cursor.execute(
+            self.cursor.execute(
                 "INSERT INTO tracks (id, track_name, album_name, artist_name, rating, track_lyrics) VALUES "
                 "(:id, :name, :album, :artist, :rating, :lyrics);", track_details)
-            cls.db.commit()
+            self.db.commit()
         except sqlite3.OperationalError as e:
-            print(constant.SQL_OPERATION_ERROR, e)
+            print(constant.OPERATION_ERROR, e)
 
 
 if __name__ == "__main__":
