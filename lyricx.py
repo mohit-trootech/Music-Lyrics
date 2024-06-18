@@ -17,7 +17,6 @@ class Request:
     then an error is raised."""
     @staticmethod
     def parse_data(response):
-        print(response['header']['status_code'])
         if response['header']['status_code'] != 200:
             raise Exception("Boo! HTTP Error")
         return response['body']
@@ -33,11 +32,11 @@ class Lyrics:
     are located in the database, the code delivers the result to exhibit the lyrics. If the lyrics are absent from
     the database, the code will resort to the Request class to obtain the data from the API, subsequently storing the
     result in the database, and ultimately displaying the result.ves the result into database and prints the result"""
-    
+
     track_details = {}
 
     def __init__(self, song):
-        self.song = song.capitalize()
+        self.song = song.capitalize().strip()
 
     def fetch_lyrics(self):
         try:
