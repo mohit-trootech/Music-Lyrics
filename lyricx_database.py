@@ -22,4 +22,4 @@ class Database:
                 "(:id, :name, :album, :artist, :rating, :lyrics);", track_details)
             cls.db.commit()
         except sqlite3.DatabaseError as e:
-            print("Database Execution Error",e)
+            print("Database Execution Error", e)
