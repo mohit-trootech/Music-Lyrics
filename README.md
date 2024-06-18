@@ -20,8 +20,8 @@ API, Database & Class Implementation Python Project to Fetch Lyrics of Any Song 
 - Install my-project with git clone
 
 ```
-  git clone https://github.com/mohit-trootech/Lyrics-Fetch-DB
-  cd Lyrics-Fetch-DB
+  git clone https://github.com/mohit-trootech/Music-Lyrics
+  cd Music-Lyrics
 ```
     
 - Create New Files
