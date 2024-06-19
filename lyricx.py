@@ -81,7 +81,7 @@ class Lyrics:
         """method to store fetched track details and lyrics"""
         try:
             self.database.save_2_database(self.track_details)
-            self.get_lyrics(list(self.track_details.values()))
+            self.get_lyrics(tuple(self.track_details.values()))
         except Exception as e:
             print(e)
 
